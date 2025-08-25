@@ -8,9 +8,9 @@ export const LIBRARY_PATH = '/charting_library/'
 // Hardcoded script candidates (NO entry file required). First one wins.
 export const SCRIPT_CANDIDATES: string[] = [
   // Prefer your local /external folder first:
+  '/js/chartingLib/charting_library.standalone.js',
   '/external/bundles/charting_library.js',
   // If you also expose it via Laravel public path:
-  '/public/js/chartingLib/charting_library.standalone.js',
   '/charting_library/bundles/charting_library.js',
   '/charting_library/charting_library.js',
   '/external/bundles/tv-chart.min.js',
