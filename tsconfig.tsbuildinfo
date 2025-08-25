@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/tvpane.tsx","./src/components/settingspanel/index.tsx","./src/config/tv.ts","./src/external/config.ts","./src/external/datafeed.ts","./src/external/helpers.ts","./src/external/streaming.ts","./src/hooks/usetradingview.ts","./src/lib/tvloader.ts","./src/lib/tvtypes.d.ts","./src/utils/logger.ts"],"version":"5.9.2"}

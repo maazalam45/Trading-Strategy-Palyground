@@ -1,0 +1,72 @@
+import { parseFullSymbol, getBarsApiRequest, getSymbolDetailsApiRequest } from './helpers'
+import { normalizeResolution } from './config'
+import { subscribeOnStream, unsubscribeFromStream } from './streaming'
+
+const configurationData = {
+  supported_resolutions: ['1','5','15','30','1H','4H','1D','1W','1M'],
+  exchanges: [],
+  symbols_types: [{ name: 'crypto', value: 'crypto' }, { name: 'fx', value: 'forex' }, { name:'index', value: 'index' }],
+}
+
+const lastBarsCache = new Map<string, any>()
+
+const Datafeed = {
+  onReady: (cb: (c:any)=>void) => setTimeout(() => cb(configurationData), 0),
+
+  resolveSymbol: async (symbolName: string, onResolve: (info:any)=>void, onError: (err:any)=>void) => {
+    try {
+      // if you have an API, use it; otherwise infer
+      const parsed = parseFullSymbol(symbolName) || { fromSymbol: symbolName, toSymbol: '' }
+      const symbolInfo = {
+        name: symbolName,
+        ticker: symbolName,
+        full_name: symbolName,
+        session: '24x7',
+        timezone: 'Etc/UTC',
+        minmov: 1,
+        pricescale: 100000, // 5 dp
+        has_intraday: true,
+        has_no_volume: false,
+        supported_resolutions: configurationData.supported_resolutions,
+        volume_precision: 0,
+        data_status: 'streaming',
+        type: 'crypto',
+        exchange: 'DEMO',
+      }
+      onResolve(symbolInfo)
+    } catch (e) { onError(e) }
+  },
+
+  getBars: async (symbolInfo: any, resolution: string, from: number, to: number, onHistory: (bars:any[], meta:any)=>void, onError: (err:any)=>void) => {
+    try {
+      // Build a fake path; replace with your server path builder
+      const res = normalizeResolution(resolution)
+      // Example: your backend expects /histo?fsym=EUR&tsym=USD&resolution=1D&toTs=...
+      const path = `/histo?symbol=${encodeURIComponent(symbolInfo.ticker)}&resolution=${res}&from=${from}&to=${to}`
+      const raw = await getBarsApiRequest(path, 'hist')
+      // Map your backend payload to TV bars
+      console.log(raw.bars)
+      const bars = raw?.bars.map((b:any) => ({
+        time: b.time * 1000,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: b.volume ?? 0,
+      }))
+
+      if (bars.length) lastBarsCache.set(symbolInfo.full_name, bars[bars.length-1])
+      onHistory(bars, { noData: bars.length === 0 })
+    } catch (e) { onError(e) }
+  },
+
+  subscribeBars: (symbolInfo:any, resolution:string, onRealtime:(bar:any)=>void, subscriberUID:string, onReset:()=>void) => {
+    subscribeOnStream(symbolInfo, resolution, onRealtime, subscriberUID, onReset, lastBarsCache.get(symbolInfo.full_name))
+  },
+
+  unsubscribeBars: (subscriberUID: string) => {
+    unsubscribeFromStream(subscriberUID)
+  },
+}
+
+export default Datafeed
