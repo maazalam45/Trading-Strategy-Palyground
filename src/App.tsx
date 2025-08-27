@@ -5,19 +5,36 @@ import SettingsModal, { SettingsState } from "./components/SettingsPanel";
 export default function App() {
   const [symbol, setSymbol] = useState("EURUSD");
   const [interval, setIntervalTF] = useState("1H");
+  const [settings, setSettings] = useState<SettingsState | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <div className="toolbar">
-        <button onClick={() => setOpen(true)}>Open Settings</button>
+        <button onClick={() => setSettingsOpen(true)}>Settings</button>
+
+        {/* <div className="grid" style={{ gridTemplateColumns: "1fr" }}>
+          <TVPane
+            id="tv_0"
+            symbol="EURUSD"
+            interval="1"
+            settings={{
+              c2: settings?.c2,
+              c3: settings?.c3,
+              c4: settings?.c4,
+            }}
+          />
+        </div> */}
+
         <SettingsModal
-          open={open}
-          onClose={() => setOpen(false)}
-          onSubmit={(state: SettingsState) => {
-            // <- save to your store or send to backend / indicator
-            console.log("submitted", state);
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          initial={settings ?? undefined}
+          onSubmit={(s) => {
+            setSettings(s);
+            setSettingsOpen(false);
           }}
         />
         <div>
@@ -48,7 +65,17 @@ export default function App() {
         </div> */}
       </div>
       <div className="grid" style={{ gridTemplateColumns: "1fr" }}>
-        <TVPane id="tv_chart_container" symbol={symbol} interval={interval} />
+        <TVPane
+          id="tv_chart_container"
+          symbol={symbol}
+          interval={interval}
+          settings={{
+            c2: settings?.c2,
+            c3: settings?.c3,
+            c4: settings?.c4,
+          }}
+        />
+        {/* <TVPane id="tv_chart_container" symbol={symbol} interval={interval} /> */}
       </div>
     </>
   );

@@ -1,3 +1,18 @@
+import * as jose from "jose";
+
+const JWT_SECRET = "9x3IKCTH73dCMmVijfiayso478fmjdk6W4jyua+xoRU=";
+
+const secret = new TextEncoder().encode(JWT_SECRET);
+
+export async function makeJwt() {
+  const token = await new jose.SignJWT({ user_id: "37" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+  return token;
+}
+
 export function splitSymbol(ticker: string): { fsym: string; tsym: string } {
   // Example: "EURUSD" → fsym=EUR, tsym=USD
   if (ticker.length === 6) {

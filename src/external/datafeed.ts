@@ -6,6 +6,7 @@ import {
 import { normalizeResolution } from "./config";
 import { subscribeOnStream, unsubscribeFromStream } from "./streaming";
 import { splitSymbol } from "../utils";
+import { setHistory, upsertRealtime } from "../state/barsStore";
 
 const configurationData = {
   supported_resolutions: ["1", "5", "15", "30", "1H", "4H", "1D", "1W", "1M"],
@@ -63,9 +64,8 @@ const Datafeed = {
     try {
       const res = normalizeResolution(resolution);
       const symbol = splitSymbol(symbolInfo.ticker);
-      console.log({ symbolInfo, resolution, periodParams, res, symbol });
       // const path = `/histo?fsym=${encodeURIComponent(symbolInfo.ticker)}&resolution=${res}&from=${periodParams.from}&to=${periodParams.to}`;
-      const path = `/api/candles?fsym=${symbol.fsym}&tsym=${symbol.tsym}&toTs=${periodParams.from}&limit=${periodParams.to}&resolution=${res}&tt=r`;
+      const path = `/api/candles?fsym=${symbol.fsym}&tsym=${symbol.tsym}&toTs=${periodParams.to}&limit=2000&resolution=${res}&tt=r`;
       const raw = await getBarsApiRequest(path, "hist");
       // Map your backend payload to TV bars
       console.log(raw.bars);
@@ -81,6 +81,8 @@ const Datafeed = {
       if (bars.length)
         lastBarsCache.set(symbolInfo.full_name, bars[bars.length - 1]);
       onHistoryCallback(bars, { noData: bars.length === 0 });
+
+      setHistory(symbolInfo.ticker, res, bars);
     } catch (e) {
       onError(e);
     }
@@ -93,6 +95,12 @@ const Datafeed = {
     subscriberUID: string,
     onReset: () => void
   ) => {
+    const res = normalizeResolution(resolution);
+    const rtCb = (bar: any) => {
+      // bar.time must be ms here (your WS aggregator already builds ms)
+      onRealtime(bar);
+      upsertRealtime(symbolInfo.ticker, res, bar);
+    };
     subscribeOnStream(
       symbolInfo,
       resolution,
