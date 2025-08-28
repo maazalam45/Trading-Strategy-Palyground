@@ -47,7 +47,7 @@ const Datafeed = {
         volume_precision: 0,
         data_status: "streaming",
         type: "crypto",
-        exchange: "DEMO",
+        exchange: "StrategyPlayground",
       };
       onResolve(symbolInfo);
     } catch (e) {
