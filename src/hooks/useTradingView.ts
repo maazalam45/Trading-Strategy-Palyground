@@ -23,7 +23,7 @@ export function useTradingView(
 
         (window as any).savedIndicators = (window as any).savedIndicators ?? [];
         (window as any).savedIndicators.push({
-          name: "C1–C2–C3 Helper (HTF Bias + T-zone + LTF Signals)",
+          name: "Fractal Model",
           code: `
     // Example minimal body — replace with your compiled JS that returns plots[]
     // Access inputs via htf, swLen, showZone, showMid, useBody, showSigs, showLabels
@@ -57,6 +57,7 @@ export function useTradingView(
           // any extras preserved
           ...extra,
         });
+        console.log("TV widget created", TV?.version());
         (widget.onChartReady || widget.onready)?.(
           () => mounted && setReady(true)
         );
