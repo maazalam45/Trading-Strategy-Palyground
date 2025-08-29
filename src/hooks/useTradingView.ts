@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { loadTradingView } from "../lib/tvLoader";
 import { LIBRARY_PATH } from "../config/tv";
 import Datafeed from "../external/datafeed";
+import { customIndicatorsGetter } from "../components/Indecators/FractalIndecator";
 
 export function useTradingView(
   containerId: string,
@@ -19,6 +20,25 @@ export function useTradingView(
       try {
         await loadTradingView();
         if (!mounted) return;
+
+        (window as any).savedIndicators = (window as any).savedIndicators ?? [];
+        (window as any).savedIndicators.push({
+          name: "Fractal Model",
+          code: `
+    // Example minimal body — replace with your compiled JS that returns plots[]
+    // Access inputs via htf, swLen, showZone, showMid, useBody, showSigs, showLabels
+    const close = PineJS.Std.close(context);
+    // return plots matching the metainfo.plots order:
+    return {
+      plots: [
+        close,          // plot_0
+        close - 0.001,  // plot_1
+        NaN,            // plot_2 (shapes) => use numeric index or NaN
+        2               // bg_plot palette index: 0 Buy, 1 Sell, 2 Neutral
+      ]
+    };
+  `,
+        });
         const TV = (window as any).TradingView;
         const WidgetCtor = TV.ChartingLibraryWidget || TV.widget;
         const widget = new WidgetCtor({
@@ -32,9 +52,12 @@ export function useTradingView(
           datafeed: Datafeed, // <-- cleaned datafeed (pure module, no DOM)
           // disabled_features: ["use_localstorage_for_settings"],
           enabled_features: [],
+
+          custom_indicators_getter: customIndicatorsGetter,
           // any extras preserved
           ...extra,
         });
+        console.log("TV widget created", TV?.version());
         (widget.onChartReady || widget.onready)?.(
           () => mounted && setReady(true)
         );
