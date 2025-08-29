@@ -161,32 +161,55 @@ export default function TVPane({
   );
 
   // 5) create/update the custom indicator study
+  // useEffect(() => {
+  //   if (!chart) return;
+
+  //   const INDICATOR_NAME = "C1–C2–C3 Helper (HTF Bias + T-zone + LTF Signals)"; // must match meta.name in your custom_indicators_getter
+
+  //   // first time: create study with inputs, then later: update inputs only
+  //   if (!studyRef.current) {
+  //     try {
+  //       const id = chart.createStudy(
+  //         INDICATOR_NAME,
+  //         /*forceOverlay*/ true,
+  //         /*lock*/ false,
+  //         indicatorInputs // <— keys must match meta.inputs[].id
+  //       );
+  //       studyRef.current = id as number;
+  //     } catch (e) {
+  //       console.error("[TVPane] createStudy error:", e);
+  //     }
+  //   } else {
+  //     try {
+  //       chart.setStudyInputs(studyRef.current, indicatorInputs);
+  //     } catch (e) {
+  //       console.error("[TVPane] setStudyInputs error:", e);
+  //     }
+  //   }
+  // }, [chart, indicatorInputs]);
+  // inside your effect that creates the study
   useEffect(() => {
     if (!chart) return;
 
-    const INDICATOR_NAME = "C1–C2–C3 Helper (HTF Bias + T-zone + LTF Signals)"; // must match meta.name in your custom_indicators_getter
+    const NAME = "Fractal Model"; // must equal meta.name (i.e., sI.name)
 
-    // first time: create study with inputs, then later: update inputs only
-    if (!studyRef.current) {
+    // remove previous on sym/interval changes
+    if (studyRef.current) {
       try {
-        const id = chart.createStudy(
-          INDICATOR_NAME,
-          /*forceOverlay*/ true,
-          /*lock*/ false,
-          indicatorInputs // <— keys must match meta.inputs[].id
-        );
-        studyRef.current = id as number;
-      } catch (e) {
-        console.error("[TVPane] createStudy error:", e);
-      }
-    } else {
-      try {
-        chart.setStudyInputs(studyRef.current, indicatorInputs);
-      } catch (e) {
-        console.error("[TVPane] setStudyInputs error:", e);
-      }
+        chart.removeEntity(studyRef.current);
+      } catch {}
+      studyRef.current = null;
     }
-  }, [chart, indicatorInputs]);
+
+    try {
+      const id = chart.createStudy(NAME, true, false); // ← no inputs arg
+      studyRef.current = id as number;
+    } catch (e) {
+      console.error("[TVPane] createStudy failed:", e);
+    }
+  }, [chart, symbol, interval]);
+
+  // remove the setStudyInputs effect since there are no inputs
 
   // 6) cleanup: remove indicator when pane unmounts or chart is torn down
   useEffect(() => {
